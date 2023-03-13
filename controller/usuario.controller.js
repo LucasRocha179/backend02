@@ -1,12 +1,19 @@
 class Usuario {
   constructor(nome, nascimento, email, senha, isAdmin = true) {
-    this.nome = nome;
+    this.nome = this.validarNome(nome);
     this.nascimento = this.validarData(nascimento);
     this.email = this.validarEmail(email);
     this.userID = this.criaUserID(email);
     this.senha = this.validarSenha(senha);
     this.datacadastro = this.getData();
     this.isAdmin = isAdmin;
+  }
+
+  validarNome(nome) {
+    if (!nome) {
+      throw new Error("Campo nome é obrigatório");
+    }
+    return nome;
   }
 
   validarData(data) {
@@ -73,7 +80,7 @@ const usuarios = [
 ];
 
 const findAll = (req, res) => {
-  console.log("findAllUsers");
+  console.log("requested findAllUsers");
   res.send(usuarios);
 };
 
@@ -81,9 +88,21 @@ const find = (req, res) => {
   if (req.params.id == null) {
     return res.send({ message: "parametro vazio!" });
   }
-  console.log(`findUser ${req.params.id}`);
+  console.log(`requested findUser ${req.params.id}`);
+  let found = false;
   const id = req.params.id;
-  res.send(usuarios[id]);
+
+  usuarios.map((valor) => {
+    if (valor.userID == id) {
+      found = true;
+      console.log(`response whith code 200`);
+      return res.send(valor);
+    }
+  });
+  if (!found) {
+    console.log(`response whith code 404`);
+    return res.status(404).send({ message: "Não encontrado" });
+  }
 };
 
 const create = (req, res) => {
@@ -100,14 +119,67 @@ const create = (req, res) => {
     );
     usuarios.push(usuario);
     console.log(`LOG: ${usuario.datacadastro} novo usuário ${usuario.userID}`);
-    res.send("usuario criado com sucesso!");
+    res.status(201).send("usuario criado com sucesso!");
   } catch (e) {
-    return res.send({ message: e.message });
+    return res.status(400).send({ message: e.message });
   }
 };
+
+const update = (req, res) => {
+  if (req.params.id == null) {
+    return res.send({ message: "parametro vazio!" });
+  }
+  let found = false;
+  const id = req.params.id;
+  const user = req.body;
+
+  usuarios.map((valor, index) => {
+    if (valor.userID == id) {
+      found = true;
+      try {
+        const usuario = new Usuario(
+          user.nome,
+          user.nascimento,
+          user.email,
+          user.senha
+        );
+        console.log(`LOG: ${usuario.nome} editado!`);
+        usuarios[index] = usuario;
+        res.status(201).send("usuario alterado com sucesso!");
+      } catch (e) {
+        return res.status(400).send({ message: e.message });
+      }
+    }
+  });
+  if (!found) {
+    return res.status(404).send({ message: "Não encontrado" });
+  }
+};
+
+const deleteUser = (req, res) => {
+  if (req.params.id == null) {
+    return res.send({ message: "parametro vazio!" });
+  }
+  let found = false;
+  const id = req.params.id;
+
+  usuarios.map((valor, index) => {
+    if (valor.userID == id) {
+      found = true;
+      console.log(`LOG: Usuário ${valor.nome} excluído!`);
+      usuarios.splice(index,1);
+      res.status(200).send("usuario excluído com sucesso!");
+    }
+  });
+  if (!found) {
+    return res.status(404).send({ message: "Usuário não encontrado" });
+  }
+}
 
 module.exports = {
   findAll,
   find,
   create,
+  update,
+  deleteUser,
 };

@@ -1,14 +1,25 @@
 const express = require("express");
 const app = express();
-const usuario = require("./router/usuario.router");
+const request = require("request");
 
-app.get("/", (req, res) => {
-  res.send("Seja bem-vindo!");
-})
+const usuario = require("./router/usuario.router");
 
 const port = 3000;
 
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  // const url = req.body.url;
+
+  // request(url, function(error, response, body){
+  //   console.log('statusCode: ', response && response.statusCode);
+
+  //   const resposta = JSON.parse(body);
+
+  //   res.send(resposta);
+  // })
+  res.send("Seja bem-vindo!");
+})
 
 app.use("/usuario", usuario);
 
